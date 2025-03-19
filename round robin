@@ -1,0 +1,112 @@
+#include <stdio.h>
+
+void calculateTimes(int n, int at[], int bt[], int tq) {
+    int remaining_bt[n], ct[n], tat[n], wt[n], queue[n], front = 0, rear = 0;
+    int completed = 0, current_time = 0, visited[n];
+    float total_wt = 0, total_tat = 0;
+
+    // Initialize arrays
+    for (int i = 0; i < n; i++) {
+        remaining_bt[i] = bt[i];  // Copy burst times
+        visited[i] = 0;  // Mark all as unvisited
+    }
+
+    // Enqueue the processes that have arrived at time 0
+    for (int i = 0; i < n; i++) {
+        if (at[i] <= current_time) {
+            queue[rear++] = i;
+            visited[i] = 1;
+        }
+    }
+
+    while (completed < n) {
+        if (front == rear) {
+            // No process available, move time forward
+            current_time++;
+            for (int i = 0; i < n; i++) {
+                if (at[i] == current_time && !visited[i]) {
+                    queue[rear++] = i;
+                    visited[i] = 1;
+                }
+            }
+            continue;
+        }
+
+        int i = queue[front++];  // Get the next process
+
+        // Execute process for time quantum or remaining burst time
+        if (remaining_bt[i] > tq) {
+            current_time += tq;
+            remaining_bt[i] -= tq;
+        } else {
+            current_time += remaining_bt[i];
+            remaining_bt[i] = 0;
+            ct[i] = current_time;  // Set the completion time
+            tat[i] = ct[i] - at[i];  // Turnaround time
+            wt[i] = tat[i] - bt[i];  // Waiting time
+            total_wt += wt[i];
+            total_tat += tat[i];
+            completed++;
+        }
+
+        // Enqueue new processes that arrived during execution
+        for (int j = 0; j < n; j++) {
+            if (at[j] <= current_time && !visited[j] && remaining_bt[j] > 0) {
+                queue[rear++] = j;
+                visited[j] = 1;
+            }
+        }
+
+        // Requeue the current process if it is not finished
+        if (remaining_bt[i] > 0) {
+            queue[rear++] = i;
+        }
+    }
+
+    // Output results
+    printf("\nProcess\tAT\tBT\tCT\tTAT\tWT\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\n", i + 1, at[i], bt[i], ct[i], tat[i], wt[i]);
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", total_wt / n);
+    printf("Average Turnaround Time: %.2f\n", total_tat / n);
+}
+
+int main() {
+    int n, tq;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    int at[n], bt[n];
+
+    for (int i = 0; i < n; i++) {
+        printf("Enter arrival time and burst time for process %d: ", i + 1);
+        scanf("%d %d", &at[i], &bt[i]);
+    }
+
+    printf("Enter time quantum: ");
+    scanf("%d", &tq);
+
+    calculateTimes(n, at, bt, tq);
+    return 0;
+}
+Enter the number of processes: 6
+Enter arrival time and burst time for process 1: 5 5
+Enter arrival time and burst time for process 2: 4 6
+Enter arrival time and burst time for process 3: 3 7
+Enter arrival time and burst time for process 4: 1 9
+Enter arrival time and burst time for process 5: 2 2
+Enter arrival time and burst time for process 6: 6 3
+Enter time quantum: 4
+
+Process   AT   BT   CT   TAT   WT
+1         5    5    32   27    22
+2         4    6    31   27    21
+3         3    7    29   26    19
+4         1    9    33   32    23
+5         2    2    7     5     3
+6         6    3    22   16    13
+
+Average Waiting Time: 22.17
+Average Turnaround Time: 16.84
