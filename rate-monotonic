@@ -1,0 +1,208 @@
+#include <stdio.h>
+#include <math.h>
+
+#define MAX 10
+
+
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+
+int lcm(int a, int b) {
+    return (a * b) / gcd(a, b);
+}
+
+
+int find_hyperperiod(int arr[], int n) {
+    int result = arr[0];
+    for (int i = 1; i < n; i++) {
+        result = lcm(result, arr[i]);
+    }
+    return result;
+}
+
+int main() {
+    int n;
+    int burst[MAX], period[MAX];
+    int remain[MAX], next_release[MAX];
+    int i;
+
+    float utilization = 0.0;
+
+ 
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    printf("Enter the CPU burst times:\n");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &burst[i]);
+    }
+
+    printf("Enter the time periods:\n");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &period[i]);
+    }
+
+    
+    int hyper = find_hyperperiod(period, n);
+    printf("LCM=%d\n\n", hyper);
+
+   
+    printf("Rate Monotone Scheduling:\n");
+    printf("PID\tBurst\tPeriod\n");
+    for (i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\n", i + 1, burst[i], period[i]);
+    }
+
+
+    for (i = 0; i < n; i++) {
+        utilization += (float)burst[i] / period[i];
+    }
+
+    float bound = n * (pow(2.0, 1.0 / n) - 1);
+    int schedulable = utilization <= bound;
+
+    printf("\n%.6f <= %.6f => %s\n", utilization, bound, schedulable ? "true" : "false");
+
+    if (schedulable) {
+        printf("\nTask execution timeline (up to LCM %d):\n", hyper);
+
+      
+        for (i = 0; i < n; i++) {
+            remain[i] = 0;
+            next_release[i] = 0;
+        }
+
+        for (int time = 0; time < hyper; time++) {
+           
+            for (i = 0; i < n; i++) {
+                if (time == next_release[i]) {
+                    remain[i] = burst[i];
+                    next_release[i] += period[i];
+                }
+            }
+
+         
+            int task_to_run = -1;
+            for (i = 0; i < n; i++) {
+                if (remain[i] > 0) {
+                    task_to_run = i;
+                    break;
+                }
+            }
+
+            if (task_to_run != -1) {
+                printf("Time %2d: Running Task %d\n", time, task_to_run + 1);
+                remain[task_to_run]--;
+            } else {
+                printf("Time %2d: Idle\n", time);
+            }
+        }
+    }
+
+    return 0;
+}
+OUTPUT1                                                                          
+Enter the number of processes: 3
+Enter the CPU burst times:
+2 1 2
+Enter the time periods:
+5 7 10
+LCM=70
+
+Rate Monotone Scheduling:
+PID     Burst   Period
+1       2       5
+2       1       7
+3       2       10
+
+0.742857 <= 0.779763 => true
+
+Task execution timeline (up to LCM 70):
+Time  0: Running Task 1
+Time  1: Running Task 1
+Time  2: Running Task 2
+Time  3: Running Task 3
+Time  4: Running Task 3
+Time  5: Running Task 1
+Time  6: Running Task 1
+Time  7: Running Task 2
+Time  8: Idle
+Time  9: Idle
+Time 10: Running Task 1
+Time 11: Running Task 1
+Time 12: Running Task 3
+Time 13: Running Task 3
+Time 14: Running Task 2
+Time 15: Running Task 1
+Time 16: Running Task 1
+Time 17: Idle
+Time 18: Idle
+Time 19: Idle
+Time 20: Running Task 1
+Time 21: Running Task 1
+Time 22: Running Task 2
+Time 23: Running Task 3
+Time 24: Running Task 3
+Time 25: Running Task 1
+Time 26: Running Task 1
+Time 27: Idle
+Time 28: Running Task 2
+Time 29: Idle
+Time 30: Running Task 1
+Time 31: Running Task 1
+Time 32: Running Task 3
+Time 33: Running Task 3
+Time 34: Idle
+Time 35: Running Task 1
+Time 36: Running Task 1
+Time 37: Running Task 2
+Time 38: Idle
+Time 39: Idle
+Time 40: Running Task 1
+Time 41: Running Task 1
+Time 42: Running Task 2
+Time 43: Running Task 3
+Time 44: Running Task 3
+Time 45: Running Task 1
+Time 46: Running Task 1
+Time 47: Idle
+Time 48: Idle
+Time 49: Running Task 2
+Time 50: Running Task 1
+Time 51: Running Task 1
+Time 52: Running Task 3
+Time 53: Running Task 3
+Time 54: Idle
+Time 55: Running Task 1
+Time 56: Running Task 1
+Time 57: Running Task 2
+Time 58: Idle
+Time 59: Idle
+Time 60: Running Task 1
+Time 61: Running Task 1
+Time 62: Running Task 3
+Time 63: Running Task 2
+Time 64: Running Task 3
+Time 65: Running Task 1
+Time 66: Running Task 1
+Time 67: Idle
+Time 68: Idle
+Time 69: Idle
+
+OUTPUT2
+Enter the number of processes: 3
+Enter the CPU burst times:
+3 6 8
+Enter the time periods:
+3 4 5
+LCM=60
+
+Rate Monotone Scheduling:
+PID     Burst   Period
+1       3       3
+2       6       4
+3       8       5
+
+4.100000 <= 0.779763 => false
