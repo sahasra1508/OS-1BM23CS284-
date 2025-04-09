@@ -1,0 +1,187 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+#define N 5             
+#define MAX_MEALS 3     
+
+#define THINKING 0
+#define HUNGRY 1
+#define EATING 2
+
+int state[N];
+int meals[N];           
+sem_t sem[N];
+pthread_mutex_t mutex;
+
+void test(int i) {
+    if (state[i] == HUNGRY &&
+        state[(i + N - 1) % N] != EATING &&
+        state[(i + 1) % N] != EATING) {
+
+        state[i] = EATING;
+        printf("Philosopher %d takes forks %d and %d\n", i + 1,
+               (i + N - 1) % N + 1, i + 1);
+        printf("Philosopher %d is EATING\n", i + 1);
+        sem_post(&sem[i]);
+    }
+}
+
+void take_forks(int i) {
+    pthread_mutex_lock(&mutex);
+
+    state[i] = HUNGRY;
+    printf("Philosopher %d is HUNGRY\n", i + 1);
+    test(i);
+
+    pthread_mutex_unlock(&mutex);
+    sem_wait(&sem[i]);
+}
+
+void put_forks(int i) {
+    pthread_mutex_lock(&mutex);
+
+    state[i] = THINKING;
+    printf("Philosopher %d puts down forks %d and %d\n", i + 1,
+           (i + N - 1) % N + 1, i + 1);
+    printf("Philosopher %d is THINKING\n", i + 1);
+
+    test((i + N - 1) % N); 
+    test((i + 1) % N);     
+
+    pthread_mutex_unlock(&mutex);
+}
+
+void* philosopher(void* num) {
+    int i = *(int*)num;
+
+    while (meals[i] < MAX_MEALS) {
+        sleep(1); 
+        take_forks(i);
+        sleep(2);  
+        meals[i]++;
+        put_forks(i);
+    }
+
+    printf("Philosopher %d has finished eating %d times.\n", i + 1, MAX_MEALS);
+    return NULL;
+}
+
+int main() {
+    pthread_t thread_id[N];
+    int phil[N];
+
+    pthread_mutex_init(&mutex, NULL);
+    for (int i = 0; i < N; i++) {
+        sem_init(&sem[i], 0, 0);
+        phil[i] = i;
+        state[i] = THINKING;
+        meals[i] = 0;
+        printf("Philosopher %d is THINKING\n", i + 1);
+    }
+
+    for (int i = 0; i < N; i++) {
+        pthread_create(&thread_id[i], NULL, philosopher, &phil[i]);
+    }
+
+    for (int i = 0; i < N; i++) {
+        pthread_join(thread_id[i], NULL);
+    }
+
+    pthread_mutex_destroy(&mutex);
+    for (int i = 0; i < N; i++) {
+        sem_destroy(&sem[i]);
+    }
+
+    printf("\nAll philosophers have finished eating.\n");
+    return 0;
+}
+OUPUT
+Philosopher 1 is THINKING
+Philosopher 2 is THINKING
+Philosopher 3 is THINKING
+Philosopher 4 is THINKING
+Philosopher 5 is THINKING
+Philosopher 4 is HUNGRY
+Philosopher 4 takes forks 3 and 4
+Philosopher 4 is EATING
+Philosopher 1 is HUNGRY
+Philosopher 1 takes forks 5 and 1
+Philosopher 1 is EATING
+Philosopher 2 is HUNGRY
+Philosopher 3 is HUNGRY
+Philosopher 5 is HUNGRY
+Philosopher 1 puts down forks 5 and 1
+Philosopher 1 is THINKING
+Philosopher 2 takes forks 1 and 2
+Philosopher 2 is EATING
+Philosopher 4 puts down forks 3 and 4
+Philosopher 4 is THINKING
+Philosopher 5 takes forks 4 and 5
+Philosopher 5 is EATING
+Philosopher 4 is HUNGRY
+Philosopher 1 is HUNGRY
+Philosopher 5 puts down forks 4 and 5
+Philosopher 5 is THINKING
+Philosopher 4 takes forks 3 and 4
+Philosopher 4 is EATING
+Philosopher 2 puts down forks 1 and 2
+Philosopher 2 is THINKING
+Philosopher 1 takes forks 5 and 1
+Philosopher 1 is EATING
+Philosopher 2 is HUNGRY
+Philosopher 5 is HUNGRY
+Philosopher 4 puts down forks 3 and 4
+Philosopher 4 is THINKING
+Philosopher 3 takes forks 2 and 3
+Philosopher 3 is EATING
+Philosopher 1 puts down forks 5 and 1
+Philosopher 1 is THINKING
+Philosopher 5 takes forks 4 and 5
+Philosopher 5 is EATING
+Philosopher 1 is HUNGRY
+Philosopher 4 is HUNGRY
+Philosopher 5 puts down forks 4 and 5
+Philosopher 5 is THINKING
+Philosopher 1 takes forks 5 and 1
+Philosopher 1 is EATING
+Philosopher 3 puts down forks 2 and 3
+Philosopher 3 is THINKING
+Philosopher 4 takes forks 3 and 4
+Philosopher 4 is EATING
+Philosopher 3 is HUNGRY
+Philosopher 5 is HUNGRY
+Philosopher 4 puts down forks 3 and 4
+Philosopher 4 is THINKING
+Philosopher 3 takes forks 2 and 3
+Philosopher 3 is EATING
+Philosopher 4 has finished eating 3 times.
+Philosopher 1 puts down forks 5 and 1
+Philosopher 1 is THINKING
+Philosopher 5 takes forks 4 and 5
+Philosopher 5 is EATING
+Philosopher 1 has finished eating 3 times.
+Philosopher 3 puts down forks 2 and 3
+Philosopher 3 is THINKING
+Philosopher 2 takes forks 1 and 2
+Philosopher 2 is EATING
+Philosopher 5 puts down forks 4 and 5
+Philosopher 5 is THINKING
+Philosopher 5 has finished eating 3 times.
+Philosopher 3 is HUNGRY
+Philosopher 2 puts down forks 1 and 2
+Philosopher 2 is THINKING
+Philosopher 3 takes forks 2 and 3
+Philosopher 3 is EATING
+Philosopher 2 is HUNGRY
+Philosopher 3 puts down forks 2 and 3
+Philosopher 3 is THINKING
+Philosopher 2 takes forks 1 and 2
+Philosopher 2 is EATING
+Philosopher 3 has finished eating 3 times.
+Philosopher 2 puts down forks 1 and 2
+Philosopher 2 is THINKING
+Philosopher 2 has finished eating 3 times.
+
+All philosophers have finished eating.
