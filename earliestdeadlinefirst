@@ -53,14 +53,14 @@ int main() {
 
     printf("\nScheduling occurs for %d ms\n\n", hyper);
 
-    // Initialize task states
+    
     for (i = 0; i < n; i++) {
         remain[i] = 0;
         deadline_abs[i] = deadline_rel[i]; // First instance
     }
 
     for (int time = 0; time < hyper; time++) {
-        // Release jobs if needed
+    
         for (i = 0; i < n; i++) {
             if (time % period[i] == 0) {
                 remain[i] = burst[i];
@@ -68,7 +68,7 @@ int main() {
             }
         }
 
-        // Select task with earliest deadline
+       
         int task = -1;
         int min_deadline = 99999;
 
