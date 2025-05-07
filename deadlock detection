@@ -14,7 +14,7 @@ int main() {
     int safeSequence[MAX_PROCESSES];
     int count = 0;
 
-    // Input
+  
     printf("Enter the number of processes: ");
     scanf("%d", &n);
     printf("Enter the number of resources: ");
@@ -47,7 +47,7 @@ int main() {
         Finish[i] = false;
     }
 
-    // Deadlock Detection + Safe Sequence (Banker-style)
+    
     bool progress;
     do {
         progress = false;
